@@ -146,11 +146,6 @@ open-roadmap/
 
 ### Custom Domain on Vercel
 
-```
-Settings → Domains → Add domain
-Nameservers: ns1.vercel-dns.com / ns2.vercel-dns.com
-```
-
 ---
 
 ## Database
