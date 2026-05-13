@@ -4,6 +4,8 @@
 
 A task management system with 4 stages, photo gallery, drag-and-drop admin panel, and military-style interface inspired by NATO and the game Squad.
 
+[**Русская версия →**](https://github.com/JustForEducate/Open-RoadMap/blob/main/README.ru.md)
+
 ---
 
 ## Stages
