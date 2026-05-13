@@ -1,0 +1,19 @@
+{
+  "name": "open-roadmap-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.13.1",
+    "sql.js": "^1.11.0",
+    "uuid": "^11.0.3"
+  }
+}
