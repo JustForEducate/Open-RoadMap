@@ -142,13 +142,6 @@ open-roadmap/
    - `VITE_API_BASE_URL` = `https://open-roadmap-api.onrender.com`
 5. **Deploy**
 
-### Домен на Vercel
-
-```
-Settings → Domains → Add domain
-Nameservers: ns1.vercel-dns.com / ns2.vercel-dns.com
-```
-
 ---
 
 ## База данных
