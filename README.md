@@ -23,7 +23,7 @@ Column titles are localized. Default UI language is **English**; **Russian** is 
 
 - Public page — everyone can view the roadmap without login
 - Admin panel (`/admin`) — manage tasks and upload photos
-- **Interface languages (RU / EN)** — dropdown in the header (🇷🇺 / 🇬🇧); labels, buttons, and stage names follow the selection
+- **Interface languages (RU / EN)** — dropdown in the header (🇷🇺 / us); labels, buttons, and stage names follow the selection
 - **Viewer translation (RU → EN)** — on the public roadmap card modal and on `/item/:id`, **Show English translation** requests the backend; the English text appears **below** the original title and description (read-only; does not change stored data). **Hide translation** clears it
 - **Public roadmap refresh** — toolbar button reloads data; optional **“Updated …”** timestamp after a successful load
 - **Item page `/item/:id`** — same refresh control and timestamp; loads item + embedded photos from a **single** `GET /api/items` response when possible (no extra photo round-trip)
