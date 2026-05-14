@@ -1,8 +1,10 @@
 import { X } from 'lucide-react';
 import { useErrorReporting } from '../context/ErrorContext';
+import { useI18n } from '../context/I18nContext';
 
 function GlobalErrorBanner() {
   const { message, dismissError } = useErrorReporting();
+  const { t } = useI18n();
   if (!message) return null;
 
   return (
@@ -12,7 +14,7 @@ function GlobalErrorBanner() {
         type="button"
         className="global-error-banner-close"
         onClick={dismissError}
-        aria-label="Закрыть уведомление об ошибке"
+        aria-label={t('globalError.close')}
       >
         <X size={18} />
       </button>

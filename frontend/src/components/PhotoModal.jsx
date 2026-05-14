@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
+import { useI18n } from '../context/I18nContext';
 
 function PhotoModal({ item, onClose, onUpdate }) {
   const [photos, setPhotos] = useState(item.photos || []);
@@ -11,6 +12,7 @@ function PhotoModal({ item, onClose, onUpdate }) {
   const panelRef = useRef(null);
   const viewerCloseRef = useRef(null);
   const { reportError } = useErrorReporting();
+  const { t } = useI18n();
 
   useEffect(() => {
     fetchPhotos();
@@ -72,7 +74,7 @@ function PhotoModal({ item, onClose, onUpdate }) {
 
   const handleDeletePhoto = async (photoId, e) => {
     e.stopPropagation();
-    if (!confirm('Удалить фото?')) return;
+    if (!confirm(t('deletePhotoConfirm'))) return;
 
     try {
       await apiJson(`/api/items/${item.id}/photos/${photoId}`, { method: 'DELETE' });
@@ -120,7 +122,7 @@ function PhotoModal({ item, onClose, onUpdate }) {
               type="button"
               className="modal-close"
               onClick={onClose}
-              aria-label="Закрыть окно фотографий"
+              aria-label={t('photoModal.closePhotos')}
             >
               <X size={16} aria-hidden="true" />
             </button>
@@ -154,14 +156,14 @@ function PhotoModal({ item, onClose, onUpdate }) {
                   }}
                   role="button"
                   tabIndex={0}
-                  aria-label="Открыть фото"
+                  aria-label={t('publicModal.openPhoto')}
                 >
                   <img src={photo.url} alt="" />
                   <button
                     type="button"
                     className="delete-btn"
                     onClick={(e) => handleDeletePhoto(photo.id, e)}
-                    aria-label="Удалить фото"
+                    aria-label={t('photoModal.deletePhoto')}
                   >
                     <Trash2 size={12} aria-hidden="true" />
                   </button>
@@ -173,7 +175,7 @@ function PhotoModal({ item, onClose, onUpdate }) {
                 className="add-photo-btn"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={loading}
-                aria-label="Добавить фото"
+                aria-label={t('photoModal.addPhoto')}
               >
                 <Plus size={24} aria-hidden="true" />
               </button>
@@ -190,7 +192,7 @@ function PhotoModal({ item, onClose, onUpdate }) {
 
             {loading && (
               <p style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--accent-nato-glow)' }}>
-                Загрузка...
+                {t('photoModal.uploading')}
               </p>
             )}
 
@@ -202,14 +204,14 @@ function PhotoModal({ item, onClose, onUpdate }) {
                   color: 'var(--text-secondary)'
                 }}
               >
-                Нажмите + чтобы добавить фото
+                {t('photoModal.clickToAdd')}
               </p>
             )}
           </div>
 
           <div className="modal-footer">
             <button type="button" className="btn" onClick={onClose}>
-              Закрыть
+              {t('photoModal.close')}
             </button>
           </div>
         </div>
@@ -225,7 +227,7 @@ function PhotoModal({ item, onClose, onUpdate }) {
             className="photo-viewer"
             role="dialog"
             aria-modal="true"
-            aria-label="Полноэкранный просмотр фотографии"
+            aria-label={t('publicModal.fullscreen')}
             onClick={(e) => e.stopPropagation()}
           >
             <img src={selectedPhoto.url} alt="" />
@@ -239,7 +241,7 @@ function PhotoModal({ item, onClose, onUpdate }) {
                     e.stopPropagation();
                     navigatePhoto(-1);
                   }}
-                  aria-label="Предыдущее фото"
+                  aria-label={t('publicModal.prevPhoto')}
                 >
                   <ChevronLeft size={24} aria-hidden="true" />
                 </button>
@@ -250,7 +252,7 @@ function PhotoModal({ item, onClose, onUpdate }) {
                     e.stopPropagation();
                     navigatePhoto(1);
                   }}
-                  aria-label="Следующее фото"
+                  aria-label={t('publicModal.nextPhoto')}
                 >
                   <ChevronRight size={24} aria-hidden="true" />
                 </button>
@@ -262,7 +264,7 @@ function PhotoModal({ item, onClose, onUpdate }) {
               type="button"
               className="photo-viewer-close"
               onClick={() => setSelectedPhoto(null)}
-              aria-label="Закрыть просмотр"
+              aria-label={t('publicModal.closeViewer')}
             >
               <X size={20} aria-hidden="true" />
             </button>

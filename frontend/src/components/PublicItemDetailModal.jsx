@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
+import { useI18n } from '../context/I18nContext';
+import { usePublicItemTranslation } from '../hooks/usePublicItemTranslation';
 
 function PublicItemDetailModal({ item, onClose }) {
   const [photos, setPhotos] = useState(() => item.photos || []);
@@ -9,6 +11,11 @@ function PublicItemDetailModal({ item, onClose }) {
   const modalCloseRef = useRef(null);
   const viewerCloseRef = useRef(null);
   const { reportError } = useErrorReporting();
+  const { t } = useI18n();
+  const { titleEn, descEn, loading: translating, translate, clear } = usePublicItemTranslation(item.id);
+
+  const canTranslate = Boolean(item.title?.trim() || item.description?.trim());
+  const hasTranslation = titleEn !== null || descEn !== null;
 
   useEffect(() => {
     setPhotos(item.photos || []);
@@ -82,26 +89,57 @@ function PublicItemDetailModal({ item, onClose }) {
             type="button"
             className="modal-close"
             onClick={onClose}
-            aria-label="Закрыть карточку"
+            aria-label={t('publicModal.closeCard')}
           >
             <X size={16} aria-hidden="true" />
           </button>
         </div>
 
         <div className="modal-body" style={{ overflowY: 'auto', flex: 1 }}>
-          {item.description && (
-            <p
-              style={{
-                marginBottom: '1.5rem',
-                color: 'var(--text-secondary)',
-                fontSize: '0.875rem',
-                lineHeight: '1.6',
-                whiteSpace: 'pre-wrap'
-              }}
-            >
-              {item.description}
-            </p>
+          {titleEn !== null && item.title?.trim() && (
+            <section className="content-translation" style={{ marginTop: 0 }}>
+              <div className="content-translation-label">{t('publicTranslate.translation')}</div>
+              <div className="content-translation-text">{titleEn}</div>
+            </section>
           )}
+
+          {item.description ? (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p
+                style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.6',
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                {item.description}
+              </p>
+              {descEn !== null && (
+                <section className="content-translation" style={{ marginTop: '0.75rem' }}>
+                  <div className="content-translation-label">{t('publicTranslate.translation')}</div>
+                  <div className="content-translation-text">{descEn}</div>
+                </section>
+              )}
+            </div>
+          ) : null}
+
+          <div className="public-translate-toolbar">
+            <button
+              type="button"
+              className="btn"
+              disabled={!canTranslate || translating}
+              aria-busy={translating}
+              onClick={() => translate(item.title, item.description, reportError)}
+            >
+              {translating ? t('translate.translating') : t('publicTranslate.showEnglish')}
+            </button>
+            {hasTranslation && (
+              <button type="button" className="btn" onClick={clear}>
+                {t('publicTranslate.hide')}
+              </button>
+            )}
+          </div>
 
           {photos.length > 0 ? (
             <div
@@ -121,7 +159,7 @@ function PublicItemDetailModal({ item, onClose }) {
                   }}
                   role="button"
                   tabIndex={0}
-                  aria-label="Открыть фото"
+                  aria-label={t('publicModal.openPhoto')}
                 >
                   <img src={photo.url} alt="" />
                 </div>
@@ -129,7 +167,7 @@ function PublicItemDetailModal({ item, onClose }) {
             </div>
           ) : (
             <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-              Фотографии не загружены
+              {t('publicModal.noPhotos')}
             </p>
           )}
         </div>
@@ -145,7 +183,7 @@ function PublicItemDetailModal({ item, onClose }) {
             className="photo-viewer"
             role="dialog"
             aria-modal="true"
-            aria-label="Полноэкранный просмотр фотографии"
+            aria-label={t('publicModal.fullscreen')}
             onClick={(e) => e.stopPropagation()}
           >
             <img src={selectedPhoto.url} alt="" />
@@ -159,7 +197,7 @@ function PublicItemDetailModal({ item, onClose }) {
                     e.stopPropagation();
                     navigatePhoto(-1);
                   }}
-                  aria-label="Предыдущее фото"
+                  aria-label={t('publicModal.prevPhoto')}
                 >
                   <ChevronLeft size={24} aria-hidden="true" />
                 </button>
@@ -170,7 +208,7 @@ function PublicItemDetailModal({ item, onClose }) {
                     e.stopPropagation();
                     navigatePhoto(1);
                   }}
-                  aria-label="Следующее фото"
+                  aria-label={t('publicModal.nextPhoto')}
                 >
                   <ChevronRight size={24} aria-hidden="true" />
                 </button>
@@ -182,7 +220,7 @@ function PublicItemDetailModal({ item, onClose }) {
               type="button"
               className="photo-viewer-close"
               onClick={() => setSelectedPhoto(null)}
-              aria-label="Закрыть просмотр"
+              aria-label={t('publicModal.closeViewer')}
             >
               <X size={20} aria-hidden="true" />
             </button>

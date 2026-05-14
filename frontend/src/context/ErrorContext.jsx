@@ -1,15 +1,20 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { getErrorMessage } from '../api';
+import { formatErrorMessage } from '../api';
+import { useI18n } from './I18nContext';
 
 const ErrorContext = createContext(null);
 
 export function ErrorProvider({ children }) {
   const [message, setMessage] = useState(null);
+  const { t } = useI18n();
 
-  const reportError = useCallback((err) => {
-    console.error(err);
-    setMessage(getErrorMessage(err));
-  }, []);
+  const reportError = useCallback(
+    (err) => {
+      console.error(err);
+      setMessage(formatErrorMessage(err, t));
+    },
+    [t]
+  );
 
   const dismissError = useCallback(() => setMessage(null), []);
 

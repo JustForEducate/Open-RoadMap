@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
+import { useI18n } from '../context/I18nContext';
 
 function ItemModal({ item, stages, onClose, onSave }) {
   const [title, setTitle] = useState(item.title);
@@ -9,6 +10,7 @@ function ItemModal({ item, stages, onClose, onSave }) {
   const [stage, setStage] = useState(item.stage);
   const [saving, setSaving] = useState(false);
   const { reportError } = useErrorReporting();
+  const { t } = useI18n();
 
   useEffect(() => {
     const handleEscape = (e) => {
@@ -48,13 +50,13 @@ function ItemModal({ item, stages, onClose, onSave }) {
       >
         <div className="modal-header">
           <h2 id="item-edit-modal-title" className="modal-title">
-            РЕДАКТИРОВАНИЕ
+            {t('modal.editTitle')}
           </h2>
           <button
             type="button"
             className="modal-close"
             onClick={onClose}
-            aria-label="Закрыть окно редактирования"
+            aria-label={t('modal.closeEdit')}
           >
             <X size={16} aria-hidden="true" />
           </button>
@@ -64,7 +66,7 @@ function ItemModal({ item, stages, onClose, onSave }) {
           <div className="modal-body">
             <div className="form-group">
               <label className="form-label" htmlFor="item-edit-title">
-                Название
+                {t('form.title')}
               </label>
               <input
                 id="item-edit-title"
@@ -79,7 +81,7 @@ function ItemModal({ item, stages, onClose, onSave }) {
 
             <div className="form-group">
               <label className="form-label" htmlFor="item-edit-desc">
-                Описание
+                {t('form.description')}
               </label>
               <textarea
                 id="item-edit-desc"
@@ -93,7 +95,7 @@ function ItemModal({ item, stages, onClose, onSave }) {
 
             <div className="form-group">
               <label className="form-label" htmlFor="item-edit-stage">
-                Этап
+                {t('form.stage')}
               </label>
               <select
                 id="item-edit-stage"
@@ -112,10 +114,10 @@ function ItemModal({ item, stages, onClose, onSave }) {
 
           <div className="modal-footer">
             <button type="button" className="btn" onClick={onClose}>
-              Отмена
+              {t('cancel')}
             </button>
             <button type="submit" className="btn" disabled={saving}>
-              {saving ? 'Сохранение...' : 'Сохранить'}
+              {saving ? t('saving') : t('save')}
             </button>
           </div>
         </form>

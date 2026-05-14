@@ -113,6 +113,36 @@ body {
 .header-actions {
   display: flex;
   gap: 1rem;
+  align-items: center;
+}
+
+.lang-switcher {
+  display: inline-flex;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.lang-switcher-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.65rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.lang-switcher-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.lang-switcher-btn.active {
+  color: var(--accent-nato-glow);
+  background: rgba(61, 139, 64, 0.15);
 }
 
 .btn {
@@ -412,6 +442,36 @@ body {
   padding: 1.5rem;
   max-height: 60vh;
   overflow-y: auto;
+}
+
+.content-translation {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--accent-nato);
+  background: rgba(61, 139, 64, 0.08);
+  border-radius: 0 4px 4px 0;
+}
+
+.content-translation-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-nato-glow);
+  margin-bottom: 0.4rem;
+}
+
+.content-translation-text {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--text-primary);
+}
+
+.public-translate-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .modal-footer {

@@ -4,14 +4,18 @@
 
 Система управления задачами с 4 этапами, фото-галереей, drag-and-drop админкой и военным HUD-дизайном.
 
+[**English version →**](README.md)
+
 ---
 
 ## Этапы
 
-1. **В планах**
-2. **В разработке**
-3. **Готово ждёт релиз**
-4. **Реализовано**
+Подписи колонок **локализованы** (RU / EN). Язык интерфейса по умолчанию подстраивается под браузер; переключатель **RU / EN** в шапке, выбор сохраняется в браузере (`openRoadMapLocale`).
+
+1. **В планах** / Planned  
+2. **В разработке** / In Development  
+3. **Готово ждёт релиз** / Ready for Release  
+4. **Реализовано** / Released  
 
 ---
 
@@ -19,6 +23,8 @@
 
 - Публичная страница — все видят roadmap без авторизации
 - Админка (`/admin`) — управление задачами, загрузка фото
+- **Интерфейс на русском и английском** — переключатель в шапке; подписи, кнопки и названия этапов следуют выбранному языку
+- **Перевод для зрителя (RU → EN)** — в модальном окне карточки на главной и на странице `/item/:id` кнопка **«Показать перевод на английский»** запрашивает бэкенд; английский текст показывается **под** оригинальным заголовком и описанием (только просмотр, данные в базе не меняются). **«Скрыть перевод»** убирает блок
 - Drag & Drop — перетаскивание задач между этапами
 - Фото — загрузка и просмотр в модальном окне с навигацией
 - Тактический дизайн в стиле НАТО и игры Squad
@@ -41,6 +47,8 @@ npm run dev  # http://localhost:5173
 ```
 
 Откройте http://localhost:5173
+
+**Перевод задач:** эндпоинт `POST /api/translate` обращается к внешнему API перевода с **бэкенда**. У машины, где запущен `npm start`, должен быть разрешён **исходящий HTTPS** (например, до MyMemory). Если перевод не работает, проверьте файрвол и прокси.
 
 ---
 
@@ -66,13 +74,19 @@ open-roadmap/
 │   ├── server.js              # Точка входа Express
 │   ├── database.js            # SQLite (локально) / PostgreSQL (на сервере)
 │   ├── routes/items.js        # CRUD API
+│   ├── routes/translate.js    # POST /api/translate (RU→EN и др.)
 │   ├── middleware/upload.js   # Multer для фото
 │   ├── uploads/               # Загруженные фото
 │   └── render.yaml            # Конфиг Render
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/             # PublicRoadmap, AdminLayout, Roadmap
-│   │   ├── components/        # StageColumn, RoadmapCard, PhotoModal, ItemModal, AdminAuth
+│   │   ├── components/        # StageColumn, RoadmapCard, PhotoModal, ItemModal, AdminAuth, LanguageSwitcher
+│   │   ├── context/           # ErrorContext, I18nContext
+│   │   ├── i18n/translations.js
+│   │   ├── hooks/useStages.js
+│   │   ├── hooks/usePublicItemTranslation.js
+│   │   ├── stageDefinitions.js
 │   │   ├── api.js             # HTTP-клиент с VITE_API_BASE_URL
 │   │   └── App.jsx            # Роутинг (/ /admin /item/:id)
 │   └── vercel.json            # Конфиг Vercel
@@ -99,6 +113,7 @@ open-roadmap/
 | `GET` | `/api/items/:id/photos` | Фото элемента |
 | `POST` | `/api/items/:id/photos` | Загрузить фото (multipart) |
 | `DELETE` | `/api/items/:id/photos/:photoId` | Удалить фото |
+| `POST` | `/api/translate` | Машинный перевод: тело `{ "texts": ["..."], "from": "ru", "to": "en" }` → `{ "texts": [...] }` |
 | `GET` | `/api/health` | Статус сервера |
 
 ---
@@ -113,11 +128,14 @@ open-roadmap/
 
 **Функции админки:**
 - Клик по карточке → модальное окно с галереей фото
-- ✏️ Редактирование названия, описания, этапа
+- ✏️ Редактирование названия, описания, этапа (без автоподстановки машинного перевода в поля)
 - 🗑️ Удаление элемента
 - Drag & Drop между этапами
 - ➕ Добавление нового элемента
 - ➕ Загрузка фото в галерею
+
+**Публичный просмотр (без входа):**
+- Открытие карточки на главной или страница `/item/:id` — **«Показать перевод на английский»** подгружает перевод; английский отображается **под** оригинальным заголовком и описанием. **«Скрыть перевод»** скрывает блок (запись в базе не меняется).
 
 ---
 
@@ -128,7 +146,7 @@ open-roadmap/
 1. **New → Web Service** → подключите GitHub репозиторий
 2. **Root Directory:** `backend`
 3. **Build Command:** `npm install`
-4. **Start Command:** `node server.js`
+4. **Start Command:** `node server.js` (для `/api/translate` желателен исходящий интернет)
 5. **New → PostgreSQL** → создайте базу данных
 6. Скопируйте **Internal Database URL** → добавьте в Environment:
    - `DATABASE_URL` = скопированный URL
@@ -180,7 +198,7 @@ STOP.bat     # Остановка (требуются права админис�
 
 ## Технологии
 
-- **Frontend:** React 18, Vite 6, React Router 6, Lucide Icons
-- **Backend:** Node.js 20+, Express 4, Multer, SQL.js / pg
+- **Frontend:** React 18, Vite 6, React Router 6, Lucide Icons; i18n интерфейса (RU/EN) через React context и словари
+- **Backend:** Node.js 20+, Express 4, Multer, SQL.js / pg; опциональный прокси машинного перевода (`fetch` к внешнему API)
 - **Design:** CSS Custom Properties, Orbitron + Share Tech Mono
 - **Hosting:** Vercel (Frontend) + Render (Backend + PostgreSQL)

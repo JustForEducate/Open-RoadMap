@@ -3,20 +3,18 @@ import Roadmap from './Roadmap';
 import AdminAuth from '../components/AdminAuth';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
+import { useI18n } from '../context/I18nContext';
 import RoadmapGridSkeleton from '../components/RoadmapGridSkeleton';
-
-const STAGES = [
-  { id: 1, name: 'В планах', color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.1)' },
-  { id: 2, name: 'В разработке', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.1)' },
-  { id: 3, name: 'Готово ждёт релиз', color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.1)' },
-  { id: 4, name: 'Реализовано', color: '#06b6d4', bgColor: 'rgba(6, 182, 212, 0.1)' }
-];
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useStages } from '../hooks/useStages';
 
 function AdminLayout() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const { reportError } = useErrorReporting();
+  const { t } = useI18n();
+  const stages = useStages();
 
   useEffect(() => {
     const adminLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
@@ -64,9 +62,11 @@ function AdminLayout() {
           </div>
           <div className="header-status">
             <span className="status-dot" aria-hidden="true" />
-            <span>ЗАГРУЗКА…</span>
+            <span>{t('loading.short')}</span>
           </div>
-          <div className="header-actions" />
+          <div className="header-actions">
+            <LanguageSwitcher />
+          </div>
         </header>
         <main className="main-content">
           <RoadmapGridSkeleton />
@@ -76,7 +76,7 @@ function AdminLayout() {
   }
 
   return (
-    <Roadmap stages={STAGES} items={items} onRefresh={fetchItems} onLogout={handleLogout} />
+    <Roadmap stages={stages} items={items} onRefresh={fetchItems} onLogout={handleLogout} />
   );
 }
 

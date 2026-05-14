@@ -16,6 +16,19 @@ export function getErrorMessage(err) {
   return 'Произошла ошибка';
 }
 
+/**
+ * @param {unknown} err
+ * @param {(key: string) => string} t
+ */
+export function formatErrorMessage(err, t) {
+  if (err instanceof ApiError) return err.message;
+  if (err instanceof TypeError && err.message === 'Failed to fetch') {
+    return t('error.noConnection');
+  }
+  if (err && typeof err.message === 'string' && err.message) return err.message;
+  return t('error.generic');
+}
+
 async function parseBody(res) {
   const ct = res.headers.get('content-type') || '';
   if (ct.includes('application/json')) {

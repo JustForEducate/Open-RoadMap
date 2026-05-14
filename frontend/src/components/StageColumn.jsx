@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import RoadmapCard from './RoadmapCard';
 import { Plus } from 'lucide-react';
+import { useI18n } from '../context/I18nContext';
 
 function StageColumn({ stage, items, stages, onCreateItem, onRefresh, onDragStart, onDragEnd, onDrop, isDragging }) {
   const [isDragOver, setIsDragOver] = useState(false);
+  const { t } = useI18n();
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -42,10 +44,10 @@ function StageColumn({ stage, items, stages, onCreateItem, onRefresh, onDragStar
             <div className="empty-state-icon">📋</div>
             {isDragging ? (
               <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', color: 'var(--accent-nato-glow)' }}>
-                Отпустите здесь
+                {t('empty.dropHere')}
               </p>
             ) : (
-              <p>Нет элементов</p>
+              <p>{t('empty.noItems')}</p>
             )}
           </div>
         ) : (
@@ -62,12 +64,12 @@ function StageColumn({ stage, items, stages, onCreateItem, onRefresh, onDragStar
         )}
         
         {isDragging && items.length > 0 && (
-          <div className="drop-hint">Отпустите здесь</div>
+          <div className="drop-hint">{t('empty.dropHere')}</div>
         )}
         
         <button type="button" className="stage-add-btn" onClick={onCreateItem}>
           <Plus size={16} />
-          Добавить элемент
+          {t('addItem')}
         </button>
       </div>
     </div>

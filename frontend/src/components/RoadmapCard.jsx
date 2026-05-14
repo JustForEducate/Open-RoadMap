@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pencil, Trash2, GripVertical } from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
+import { useI18n } from '../context/I18nContext';
 import ItemModal from './ItemModal';
 import PhotoModal from './PhotoModal';
 
@@ -9,10 +10,11 @@ function RoadmapCard({ item, stages, onRefresh, onDragStart, onDragEnd }) {
   const [showItemModal, setShowItemModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const { reportError } = useErrorReporting();
+  const { t } = useI18n();
 
   const handleDelete = async (e) => {
     e.stopPropagation();
-    if (!confirm('Удалить элемент?')) return;
+    if (!confirm(t('deleteItemConfirm'))) return;
 
     try {
       await apiJson(`/api/items/${item.id}`, { method: 'DELETE' });
@@ -66,7 +68,7 @@ function RoadmapCard({ item, stages, onRefresh, onDragStart, onDragEnd }) {
           }}
           role="button"
           tabIndex={0}
-          aria-label={`Открыть фото: ${item.title}`}
+          aria-label={t('card.openPhotos', { title: item.title })}
         >
           <div className="card-title">{item.title}</div>
           {item.description && <div className="card-description">{item.description}</div>}
@@ -82,7 +84,7 @@ function RoadmapCard({ item, stages, onRefresh, onDragStart, onDragEnd }) {
                 )}
               </>
             ) : (
-              <div className="card-photo-more">Нет фото</div>
+              <div className="card-photo-more">{t('noPhotos')}</div>
             )}
           </div>
         </div>
@@ -92,7 +94,7 @@ function RoadmapCard({ item, stages, onRefresh, onDragStart, onDragEnd }) {
             type="button"
             className="card-action-btn edit"
             onClick={handleEdit}
-            aria-label={`Редактировать: ${item.title}`}
+            aria-label={t('card.edit', { title: item.title })}
           >
             <Pencil size={12} aria-hidden="true" />
           </button>
@@ -100,7 +102,7 @@ function RoadmapCard({ item, stages, onRefresh, onDragStart, onDragEnd }) {
             type="button"
             className="card-action-btn"
             onClick={handleDelete}
-            aria-label={`Удалить: ${item.title}`}
+            aria-label={t('card.delete', { title: item.title })}
           >
             <Trash2 size={12} aria-hidden="true" />
           </button>

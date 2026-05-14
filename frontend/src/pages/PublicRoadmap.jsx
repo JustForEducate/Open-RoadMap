@@ -3,22 +3,20 @@ import { Link } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
+import { useI18n } from '../context/I18nContext';
 import AppFooter from '../components/AppFooter';
 import RoadmapGridSkeleton from '../components/RoadmapGridSkeleton';
 import PublicItemDetailModal from '../components/PublicItemDetailModal';
-
-const STAGES = [
-  { id: 1, name: 'В планах', color: '#6366f1', bgColor: 'rgba(99, 102, 241, 0.1)' },
-  { id: 2, name: 'В разработке', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.1)' },
-  { id: 3, name: 'Готово ждёт релиз', color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.1)' },
-  { id: 4, name: 'Реализовано', color: '#06b6d4', bgColor: 'rgba(6, 182, 212, 0.1)' }
-];
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useStages } from '../hooks/useStages';
 
 function PublicRoadmap() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalItem, setModalItem] = useState(null);
   const { reportError } = useErrorReporting();
+  const { t } = useI18n();
+  const stages = useStages();
 
   useEffect(() => {
     fetchItems();
@@ -62,13 +60,14 @@ function PublicRoadmap() {
 
         <div className="header-status">
           <span className="status-dot" aria-hidden="true" />
-          <span>{loading ? 'ЗАГРУЗКА…' : 'СИСТЕМА ОНЛАЙН'}</span>
+          <span>{loading ? t('loading.short') : t('status.online')}</span>
         </div>
 
         <div className="header-actions">
+          <LanguageSwitcher />
           <Link to="/admin" className="btn">
             <Shield size={16} aria-hidden="true" />
-            Админка
+            {t('admin')}
           </Link>
         </div>
       </header>
@@ -78,7 +77,7 @@ function PublicRoadmap() {
           <RoadmapGridSkeleton />
         ) : (
           <div className="roadmap-grid">
-            {STAGES.map((stage) => (
+            {stages.map((stage) => (
               <div key={stage.id} className="stage-column">
                 <div className="stage-header">
                   <div
@@ -95,7 +94,7 @@ function PublicRoadmap() {
                       <div className="empty-state-icon" aria-hidden="true">
                         📋
                       </div>
-                      <p>Нет элементов</p>
+                      <p>{t('empty.noItems')}</p>
                     </div>
                   ) : (
                     getItemsByStage(stage.id).map((item) => (
@@ -106,7 +105,7 @@ function PublicRoadmap() {
                         className="card"
                         onClick={() => openCard(item)}
                         onKeyDown={(e) => handleCardKeyDown(e, item)}
-                        aria-label={`Открыть: ${item.title}`}
+                        aria-label={t('card.open', { title: item.title })}
                       >
                         <div className="card-title">{item.title}</div>
                         {item.description && (
@@ -129,7 +128,7 @@ function PublicRoadmap() {
                               )}
                             </>
                           ) : (
-                            <div className="card-photo-more">Нет фото</div>
+                            <div className="card-photo-more">{t('noPhotos')}</div>
                           )}
                         </div>
                       </div>

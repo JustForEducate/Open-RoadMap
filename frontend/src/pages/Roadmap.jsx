@@ -3,17 +3,20 @@ import StageColumn from '../components/StageColumn';
 import { LogOut, RefreshCw } from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
+import { useI18n } from '../context/I18nContext';
 import AppFooter from '../components/AppFooter';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 function Roadmap({ stages, items, onRefresh, onLogout, loading }) {
   const [draggedItem, setDraggedItem] = useState(null);
   const { reportError } = useErrorReporting();
+  const { t } = useI18n();
 
   if (loading) {
     return (
       <div className="loading-container">
         <div className="loading-spinner" aria-hidden="true" />
-        <div className="loading-text">ЗАГРУЗКА ДАННЫХ...</div>
+        <div className="loading-text">{t('loading.data')}</div>
       </div>
     );
   }
@@ -28,7 +31,7 @@ function Roadmap({ stages, items, onRefresh, onLogout, loading }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: 'Новый элемент',
+          title: t('newItemTitle'),
           description: '',
           stage: stageId
         })
@@ -78,21 +81,22 @@ function Roadmap({ stages, items, onRefresh, onLogout, loading }) {
 
         <div className="header-status">
           <span className="status-dot" aria-hidden="true" />
-          <span>РЕЖИМ РЕДАКТИРОВАНИЯ</span>
+          <span>{t('status.editMode')}</span>
         </div>
 
         <div className="header-actions">
+          <LanguageSwitcher />
           <button
             type="button"
             className="btn"
             onClick={onRefresh}
-            aria-label="Обновить данные дорожной карты"
+            aria-label={t('refresh.aria')}
           >
             <RefreshCw size={16} aria-hidden="true" />
           </button>
           <button type="button" className="btn btn-danger" onClick={onLogout}>
             <LogOut size={16} aria-hidden="true" />
-            Выйти
+            {t('logout')}
           </button>
         </div>
       </header>

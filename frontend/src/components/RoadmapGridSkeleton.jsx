@@ -1,3 +1,5 @@
+import { useI18n } from '../context/I18nContext';
+
 function ColumnSkeleton() {
   return (
     <div className="stage-column skeleton-column" aria-hidden="true">
@@ -16,8 +18,9 @@ function ColumnSkeleton() {
 }
 
 function RoadmapGridSkeleton() {
+  const { t } = useI18n();
   return (
-    <div className="roadmap-grid roadmap-grid-skeleton" aria-busy="true" aria-label="Загрузка дорожной карты">
+    <div className="roadmap-grid roadmap-grid-skeleton" aria-busy="true" aria-label={t('skeleton.roadmap')}>
       <ColumnSkeleton />
       <ColumnSkeleton />
       <ColumnSkeleton />

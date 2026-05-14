@@ -6,6 +6,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { initDatabase } from './database.js';
 import itemsRouter from './routes/items.js';
+import translateRouter from './routes/translate.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +23,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/items', itemsRouter);
+app.use('/api/translate', translateRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'online', timestamp: new Date().toISOString() });

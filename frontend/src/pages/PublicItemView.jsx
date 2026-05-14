@@ -3,7 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
+import { useI18n } from '../context/I18nContext';
 import ItemDetailSkeleton from '../components/ItemDetailSkeleton';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { usePublicItemTranslation } from '../hooks/usePublicItemTranslation';
 
 function PublicItemView() {
   const { id } = useParams();
@@ -13,6 +16,8 @@ function PublicItemView() {
   const [loading, setLoading] = useState(true);
   const viewerCloseRef = useRef(null);
   const { reportError } = useErrorReporting();
+  const { t } = useI18n();
+  const { titleEn, descEn, loading: translating, translate, clear } = usePublicItemTranslation(id ?? '');
 
   useEffect(() => {
     setLoading(true);
@@ -23,8 +28,8 @@ function PublicItemView() {
 
   useEffect(() => {
     if (!selectedPhoto) return;
-    const t = requestAnimationFrame(() => viewerCloseRef.current?.focus());
-    return () => cancelAnimationFrame(t);
+    const rafId = requestAnimationFrame(() => viewerCloseRef.current?.focus());
+    return () => cancelAnimationFrame(rafId);
   }, [selectedPhoto]);
 
   const fetchItem = async () => {
@@ -68,13 +73,15 @@ function PublicItemView() {
         <header className="header">
           <Link to="/" className="btn">
             <ArrowLeft size={16} aria-hidden="true" />
-            На главную
+            {t('home')}
           </Link>
           <div className="header-status">
             <span className="status-dot" aria-hidden="true" />
-            <span>ЗАГРУЗКА…</span>
+            <span>{t('loading.short')}</span>
           </div>
-          <div />
+          <div className="header-actions">
+            <LanguageSwitcher />
+          </div>
         </header>
         <ItemDetailSkeleton />
       </div>
@@ -83,30 +90,38 @@ function PublicItemView() {
 
   if (!item) {
     return (
-      <div className="loading-container">
-        <h2 style={{ color: 'var(--accent-danger)' }}>Элемент не найден</h2>
+      <div className="loading-container" style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+          <LanguageSwitcher />
+        </div>
+        <h2 style={{ color: 'var(--accent-danger)' }}>{t('itemNotFound')}</h2>
         <Link to="/" className="btn" style={{ marginTop: '1rem' }}>
           <ArrowLeft size={16} aria-hidden="true" />
-          На главную
+          {t('home')}
         </Link>
       </div>
     );
   }
+
+  const canTranslate = Boolean(item.title?.trim() || item.description?.trim());
+  const hasTranslation = titleEn !== null || descEn !== null;
 
   return (
     <div className="app-container">
       <header className="header">
         <Link to="/" className="btn">
           <ArrowLeft size={16} aria-hidden="true" />
-          На главную
+          {t('home')}
         </Link>
 
         <div className="header-status">
           <span className="status-dot" aria-hidden="true" />
-          <span>ПРОСМОТР ЭЛЕМЕНТА</span>
+          <span>{t('status.viewItem')}</span>
         </div>
 
-        <div />
+        <div className="header-actions">
+          <LanguageSwitcher />
+        </div>
       </header>
 
       <main className="main-content">
@@ -124,19 +139,50 @@ function PublicItemView() {
           </div>
 
           <div className="modal-body">
-            {item.description && (
-              <p
-                style={{
-                  marginBottom: '1.5rem',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.875rem',
-                  lineHeight: '1.6',
-                  whiteSpace: 'pre-wrap'
-                }}
-              >
-                {item.description}
-              </p>
+            {titleEn !== null && item.title?.trim() && (
+              <section className="content-translation" style={{ marginTop: 0, marginBottom: '1.25rem' }}>
+                <div className="content-translation-label">{t('publicTranslate.translation')}</div>
+                <div className="content-translation-text">{titleEn}</div>
+              </section>
             )}
+
+            {item.description ? (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <p
+                  style={{
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.875rem',
+                    lineHeight: '1.6',
+                    whiteSpace: 'pre-wrap'
+                  }}
+                >
+                  {item.description}
+                </p>
+                {descEn !== null && (
+                  <section className="content-translation" style={{ marginTop: '0.75rem' }}>
+                    <div className="content-translation-label">{t('publicTranslate.translation')}</div>
+                    <div className="content-translation-text">{descEn}</div>
+                  </section>
+                )}
+              </div>
+            ) : null}
+
+            <div className="public-translate-toolbar">
+              <button
+                type="button"
+                className="btn"
+                disabled={!canTranslate || translating}
+                aria-busy={translating}
+                onClick={() => translate(item.title, item.description, reportError)}
+              >
+                {translating ? t('translate.translating') : t('publicTranslate.showEnglish')}
+              </button>
+              {hasTranslation && (
+                <button type="button" className="btn" onClick={clear}>
+                  {t('publicTranslate.hide')}
+                </button>
+              )}
+            </div>
 
             {photos.length > 0 ? (
               <div
@@ -156,7 +202,7 @@ function PublicItemView() {
                     }}
                     role="button"
                     tabIndex={0}
-                    aria-label="Открыть фото"
+                    aria-label={t('publicModal.openPhoto')}
                   >
                     <img src={photo.url} alt="" />
                   </div>
@@ -164,7 +210,7 @@ function PublicItemView() {
               </div>
             ) : (
               <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-                Фотографии не загружены
+                {t('publicModal.noPhotos')}
               </p>
             )}
           </div>
@@ -181,7 +227,7 @@ function PublicItemView() {
             className="photo-viewer"
             role="dialog"
             aria-modal="true"
-            aria-label="Полноэкранный просмотр фотографии"
+            aria-label={t('publicModal.fullscreen')}
             onClick={(e) => e.stopPropagation()}
           >
             <img src={selectedPhoto.url} alt="" />
@@ -195,7 +241,7 @@ function PublicItemView() {
                     e.stopPropagation();
                     navigatePhoto(-1);
                   }}
-                  aria-label="Предыдущее фото"
+                  aria-label={t('publicModal.prevPhoto')}
                 >
                   <ChevronLeft size={24} aria-hidden="true" />
                 </button>
@@ -206,7 +252,7 @@ function PublicItemView() {
                     e.stopPropagation();
                     navigatePhoto(1);
                   }}
-                  aria-label="Следующее фото"
+                  aria-label={t('publicModal.nextPhoto')}
                 >
                   <ChevronRight size={24} aria-hidden="true" />
                 </button>
@@ -218,7 +264,7 @@ function PublicItemView() {
               type="button"
               className="photo-viewer-close"
               onClick={() => setSelectedPhoto(null)}
-              aria-label="Закрыть просмотр"
+              aria-label={t('publicModal.closeViewer')}
             >
               <X size={20} aria-hidden="true" />
             </button>
