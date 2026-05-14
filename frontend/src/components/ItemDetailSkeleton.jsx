@@ -3,7 +3,7 @@ import { useI18n } from '../context/I18nContext';
 function ItemDetailSkeleton() {
   const { t } = useI18n();
   return (
-    <main className="main-content" aria-busy="true" aria-label={t('skeleton.item')}>
+    <div className="main-content" aria-busy="true" aria-label={t('skeleton.item')}>
       <div className="modal item-detail-skeleton" style={{ maxWidth: '900px', margin: '0 auto' }}>
         <div className="modal-header">
           <div className="skeleton-block skeleton-item-title" />
@@ -18,7 +18,7 @@ function ItemDetailSkeleton() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 

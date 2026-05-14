@@ -70,7 +70,9 @@ function RoadmapCard({ item, stages, onRefresh, onDragStart, onDragEnd }) {
           tabIndex={0}
           aria-label={t('card.openPhotos', { title: item.title })}
         >
-          <div className="card-title">{item.title}</div>
+          <div className="card-title" title={item.title}>
+            {item.title}
+          </div>
           {item.description && <div className="card-description">{item.description}</div>}
 
           <div className="card-photos">
@@ -84,7 +86,7 @@ function RoadmapCard({ item, stages, onRefresh, onDragStart, onDragEnd }) {
                 )}
               </>
             ) : (
-              <div className="card-photo-more">{t('noPhotos')}</div>
+              <div className="card-photo-more card-photo-more--empty">{t('noPhotos')}</div>
             )}
           </div>
         </div>

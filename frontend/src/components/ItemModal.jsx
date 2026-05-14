@@ -21,7 +21,7 @@ function ItemModal({ item, stages, onClose, onSave }) {
   }, [onClose]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     if (!title.trim()) return;
 
     setSaving(true);
@@ -62,7 +62,15 @@ function ItemModal({ item, stages, onClose, onSave }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+              e.preventDefault();
+              if (!saving) void handleSubmit(e);
+            }
+          }}
+        >
           <div className="modal-body">
             <div className="form-group">
               <label className="form-label" htmlFor="item-edit-title">
@@ -74,6 +82,7 @@ function ItemModal({ item, stages, onClose, onSave }) {
                 className="form-input"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                title={title}
                 autoFocus
                 required
               />
@@ -112,13 +121,16 @@ function ItemModal({ item, stages, onClose, onSave }) {
             </div>
           </div>
 
-          <div className="modal-footer">
-            <button type="button" className="btn" onClick={onClose}>
-              {t('cancel')}
-            </button>
-            <button type="submit" className="btn" disabled={saving}>
-              {saving ? t('saving') : t('save')}
-            </button>
+          <div className="modal-footer modal-footer--stack">
+            <div className="modal-footer-actions">
+              <button type="button" className="btn" onClick={onClose}>
+                {t('cancel')}
+              </button>
+              <button type="submit" className="btn" disabled={saving}>
+                {saving ? t('saving') : t('save')}
+              </button>
+            </div>
+            <span className="form-hint">{t('itemModal.saveHint')}</span>
           </div>
         </form>
       </div>

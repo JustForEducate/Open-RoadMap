@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield } from 'lucide-react';
+import { Shield, RefreshCw } from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
 import { useI18n } from '../context/I18nContext';
+import { formatClockTime } from '../formatTime';
 import AppFooter from '../components/AppFooter';
 import RoadmapGridSkeleton from '../components/RoadmapGridSkeleton';
 import PublicItemDetailModal from '../components/PublicItemDetailModal';
@@ -13,23 +14,36 @@ import { useStages } from '../hooks/useStages';
 function PublicRoadmap() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const [modalItem, setModalItem] = useState(null);
   const { reportError } = useErrorReporting();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const stages = useStages();
+  const isFirstLoad = useRef(true);
 
   useEffect(() => {
     fetchItems();
   }, []);
 
-  const fetchItems = async () => {
+  const fetchItems = async (manual = false) => {
+    if (manual) setRefreshing(true);
+    else if (isFirstLoad.current) setLoading(true);
+
     try {
       const data = await apiJson('/api/items');
       setItems(data);
+      setLastUpdated(formatClockTime(new Date(), locale));
+      return true;
     } catch (err) {
       reportError(err);
+      return false;
     } finally {
-      setLoading(false);
+      if (isFirstLoad.current) {
+        isFirstLoad.current = false;
+        setLoading(false);
+      }
+      setRefreshing(false);
     }
   };
 
@@ -59,11 +73,26 @@ function PublicRoadmap() {
         </div>
 
         <div className="header-status">
-          <span className="status-dot" aria-hidden="true" />
-          <span>{loading ? t('loading.short') : t('status.online')}</span>
+          <div className="header-status-row">
+            <span className="status-dot" aria-hidden="true" />
+            <span>{loading ? t('loading.short') : t('status.online')}</span>
+          </div>
+          {lastUpdated && !loading && (
+            <span className="header-updated">{t('lastUpdated', { time: lastUpdated })}</span>
+          )}
         </div>
 
         <div className="header-actions">
+          <button
+            type="button"
+            className="btn btn-icon-only"
+            onClick={() => fetchItems(true)}
+            disabled={loading || refreshing}
+            aria-label={t('refresh.aria')}
+            aria-busy={refreshing}
+          >
+            <RefreshCw size={16} className={refreshing ? 'icon-spin' : ''} aria-hidden="true" />
+          </button>
           <LanguageSwitcher />
           <Link to="/admin" className="btn">
             <Shield size={16} aria-hidden="true" />
@@ -72,7 +101,7 @@ function PublicRoadmap() {
         </div>
       </header>
 
-      <main className="main-content">
+      <main id="main-content" className="main-content" tabIndex={-1}>
         {loading ? (
           <RoadmapGridSkeleton />
         ) : (
@@ -107,7 +136,9 @@ function PublicRoadmap() {
                         onKeyDown={(e) => handleCardKeyDown(e, item)}
                         aria-label={t('card.open', { title: item.title })}
                       >
-                        <div className="card-title">{item.title}</div>
+                        <div className="card-title" title={item.title}>
+                          {item.title}
+                        </div>
                         {item.description && (
                           <div className="card-description">{item.description}</div>
                         )}
@@ -128,7 +159,7 @@ function PublicRoadmap() {
                               )}
                             </>
                           ) : (
-                            <div className="card-photo-more">{t('noPhotos')}</div>
+                            <div className="card-photo-more card-photo-more--empty">{t('noPhotos')}</div>
                           )}
                         </div>
                       </div>

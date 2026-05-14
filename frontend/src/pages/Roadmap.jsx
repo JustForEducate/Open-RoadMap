@@ -1,16 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import StageColumn from '../components/StageColumn';
 import { LogOut, RefreshCw } from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
 import { useI18n } from '../context/I18nContext';
+import { formatClockTime } from '../formatTime';
 import AppFooter from '../components/AppFooter';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 function Roadmap({ stages, items, onRefresh, onLogout, loading }) {
   const [draggedItem, setDraggedItem] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const { reportError } = useErrorReporting();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+
+  useEffect(() => {
+    if (loading) return;
+    setLastUpdated(formatClockTime(new Date(), locale));
+  }, [items, loading, locale]);
 
   if (loading) {
     return (
@@ -36,7 +44,7 @@ function Roadmap({ stages, items, onRefresh, onLogout, loading }) {
           stage: stageId
         })
       });
-      onRefresh();
+      await onRefresh();
     } catch (err) {
       reportError(err);
     }
@@ -62,11 +70,25 @@ function Roadmap({ stages, items, onRefresh, onLogout, loading }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stage: targetStageId })
       });
-      onRefresh();
+      await onRefresh();
     } catch (err) {
       reportError(err);
     }
     setDraggedItem(null);
+  };
+
+  const handleHeaderRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleLogoutClick = () => {
+    if (typeof window !== 'undefined' && !window.confirm(t('logoutConfirm'))) return;
+    onLogout();
   };
 
   return (
@@ -80,28 +102,35 @@ function Roadmap({ stages, items, onRefresh, onLogout, loading }) {
         </div>
 
         <div className="header-status">
-          <span className="status-dot" aria-hidden="true" />
-          <span>{t('status.editMode')}</span>
+          <div className="header-status-row">
+            <span className="status-dot" aria-hidden="true" />
+            <span>{t('status.editMode')}</span>
+          </div>
+          {lastUpdated && (
+            <span className="header-updated">{t('lastUpdated', { time: lastUpdated })}</span>
+          )}
         </div>
 
         <div className="header-actions">
           <LanguageSwitcher />
           <button
             type="button"
-            className="btn"
-            onClick={onRefresh}
+            className="btn btn-icon-only"
+            onClick={handleHeaderRefresh}
+            disabled={refreshing}
             aria-label={t('refresh.aria')}
+            aria-busy={refreshing}
           >
-            <RefreshCw size={16} aria-hidden="true" />
+            <RefreshCw size={16} className={refreshing ? 'icon-spin' : ''} aria-hidden="true" />
           </button>
-          <button type="button" className="btn btn-danger" onClick={onLogout}>
+          <button type="button" className="btn btn-danger" onClick={handleLogoutClick}>
             <LogOut size={16} aria-hidden="true" />
             {t('logout')}
           </button>
         </div>
       </header>
 
-      <main className="main-content">
+      <main id="main-content" className="main-content" tabIndex={-1}>
         <div className="roadmap-grid">
           {stages.map((stage) => (
             <StageColumn

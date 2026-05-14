@@ -27,9 +27,24 @@ function withPhotoUrls(req, photos) {
 router.get('/', async (req, res) => {
   try {
     const items = await getAll('SELECT * FROM items ORDER BY stage, created_at');
-    const result = await Promise.all(items.map(async (item) => {
-      const photos = await getAll('SELECT * FROM photos WHERE item_id = ?', [item.id]);
-      return { ...item, photos: withPhotoUrls(req, photos) };
+    if (items.length === 0) {
+      return res.json([]);
+    }
+    const ids = items.map((i) => i.id);
+    const placeholders = ids.map(() => '?').join(', ');
+    const allPhotos = await getAll(
+      `SELECT * FROM photos WHERE item_id IN (${placeholders}) ORDER BY created_at`,
+      ids
+    );
+    const byItem = new Map();
+    for (const p of allPhotos) {
+      const list = byItem.get(p.item_id);
+      if (list) list.push(p);
+      else byItem.set(p.item_id, [p]);
+    }
+    const result = items.map((item) => ({
+      ...item,
+      photos: withPhotoUrls(req, byItem.get(item.id) || [])
     }));
     res.json(result);
   } catch (err) {

@@ -27,8 +27,10 @@ function AdminLayout() {
     try {
       const data = await apiJson('/api/items');
       setItems(data);
+      return true;
     } catch (err) {
       reportError(err);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -55,20 +57,22 @@ function AdminLayout() {
       <div className="app-container">
         <header className="header">
           <div className="logo">
-          <div className="logo-icon">
-            <svg width="20" height="20" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2"><text y=".9em" font-size="90">🗺️</text></svg>
-          </div>
+            <div className="logo-icon">
+              <svg width="20" height="20" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2"><text y=".9em" font-size="90">🗺️</text></svg>
+            </div>
             <span className="logo-text">OpenRoadMap</span>
           </div>
           <div className="header-status">
-            <span className="status-dot" aria-hidden="true" />
-            <span>{t('loading.short')}</span>
+            <div className="header-status-row">
+              <span className="status-dot" aria-hidden="true" />
+              <span>{t('loading.short')}</span>
+            </div>
           </div>
           <div className="header-actions">
             <LanguageSwitcher />
           </div>
         </header>
-        <main className="main-content">
+        <main id="main-content" className="main-content" tabIndex={-1}>
           <RoadmapGridSkeleton />
         </main>
       </div>

@@ -1,12 +1,22 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  ArrowLeft,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  ExternalLink,
+  Link2,
+  Check
+} from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
 import { useI18n } from '../context/I18nContext';
 import ItemDetailSkeleton from '../components/ItemDetailSkeleton';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { usePublicItemTranslation } from '../hooks/usePublicItemTranslation';
+import { formatClockTime } from '../formatTime';
 
 function PublicItemView() {
   const { id } = useParams();
@@ -14,42 +24,52 @@ function PublicItemView() {
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [copied, setCopied] = useState(false);
   const viewerCloseRef = useRef(null);
   const { reportError } = useErrorReporting();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { titleEn, descEn, loading: translating, translate, clear } = usePublicItemTranslation(id ?? '');
 
+  const fetchItem = useCallback(
+    async (manual = false) => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+      if (manual) setRefreshing(true);
+      else setLoading(true);
+      try {
+        const items = await apiJson('/api/items');
+        const foundItem = items.find((i) => i.id === id);
+        if (foundItem) {
+          setItem(foundItem);
+          setPhotos(foundItem.photos || []);
+        } else {
+          setItem(null);
+          setPhotos([]);
+        }
+        setLastUpdated(formatClockTime(new Date(), locale));
+      } catch (err) {
+        reportError(err);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [id, locale, reportError]
+  );
+
   useEffect(() => {
-    setLoading(true);
-    setItem(null);
-    setPhotos([]);
-    fetchItem();
-  }, [id]);
+    void fetchItem(false);
+  }, [fetchItem]);
 
   useEffect(() => {
     if (!selectedPhoto) return;
     const rafId = requestAnimationFrame(() => viewerCloseRef.current?.focus());
     return () => cancelAnimationFrame(rafId);
   }, [selectedPhoto]);
-
-  const fetchItem = async () => {
-    try {
-      const items = await apiJson('/api/items');
-      const foundItem = items.find((i) => i.id === id);
-      if (foundItem) {
-        setItem(foundItem);
-        const photosData = await apiJson(`/api/items/${id}/photos`);
-        setPhotos(photosData);
-      } else {
-        setItem(null);
-        setPhotos([]);
-      }
-    } catch (err) {
-      reportError(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const navigatePhoto = (direction) => {
     const currentIndex = photos.findIndex((p) => p.id === selectedPhoto.id);
@@ -67,6 +87,18 @@ function PublicItemView() {
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
 
+  const handleCopyLink = async () => {
+    if (!id) return;
+    const url = `${window.location.origin}/item/${id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      reportError(err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="app-container">
@@ -76,14 +108,18 @@ function PublicItemView() {
             {t('home')}
           </Link>
           <div className="header-status">
-            <span className="status-dot" aria-hidden="true" />
-            <span>{t('loading.short')}</span>
+            <div className="header-status-row">
+              <span className="status-dot" aria-hidden="true" />
+              <span>{t('loading.short')}</span>
+            </div>
           </div>
           <div className="header-actions">
             <LanguageSwitcher />
           </div>
         </header>
-        <ItemDetailSkeleton />
+        <main id="main-content" className="main-content" tabIndex={-1}>
+          <ItemDetailSkeleton />
+        </main>
       </div>
     );
   }
@@ -115,16 +151,31 @@ function PublicItemView() {
         </Link>
 
         <div className="header-status">
-          <span className="status-dot" aria-hidden="true" />
-          <span>{t('status.viewItem')}</span>
+          <div className="header-status-row">
+            <span className="status-dot" aria-hidden="true" />
+            <span>{t('status.viewItem')}</span>
+          </div>
+          {lastUpdated && (
+            <span className="header-updated">{t('lastUpdated', { time: lastUpdated })}</span>
+          )}
         </div>
 
         <div className="header-actions">
+          <button
+            type="button"
+            className="btn btn-icon-only"
+            onClick={() => fetchItem(true)}
+            disabled={refreshing}
+            aria-label={t('refresh.aria')}
+            aria-busy={refreshing}
+          >
+            <RefreshCw size={16} className={refreshing ? 'icon-spin' : ''} aria-hidden="true" />
+          </button>
           <LanguageSwitcher />
         </div>
       </header>
 
-      <main className="main-content">
+      <main id="main-content" className="main-content" tabIndex={-1}>
         <div className="modal" style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div className="modal-header">
             <h2
@@ -133,9 +184,21 @@ function PublicItemView() {
                 color: 'var(--accent-nato-glow)',
                 textShadow: '0 0 10px rgba(74, 222, 80, 0.5)'
               }}
+              title={item.title}
             >
               {item.title}
             </h2>
+          </div>
+
+          <div className="modal-toolbar">
+            <Link to={`/item/${item.id}`} className="btn btn-ghost">
+              <ExternalLink size={14} aria-hidden="true" />
+              {t('publicModal.openFullPage')}
+            </Link>
+            <button type="button" className="btn btn-ghost" onClick={handleCopyLink}>
+              {copied ? <Check size={14} aria-hidden="true" /> : <Link2 size={14} aria-hidden="true" />}
+              {copied ? t('publicModal.linkCopied') : t('publicModal.copyLink')}
+            </button>
           </div>
 
           <div className="modal-body">

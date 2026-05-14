@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Link2,
+  Check
+} from 'lucide-react';
 import { apiJson } from '../api';
 import { useErrorReporting } from '../context/ErrorContext';
 import { useI18n } from '../context/I18nContext';
@@ -8,6 +16,7 @@ import { usePublicItemTranslation } from '../hooks/usePublicItemTranslation';
 function PublicItemDetailModal({ item, onClose }) {
   const [photos, setPhotos] = useState(() => item.photos || []);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [copied, setCopied] = useState(false);
   const modalCloseRef = useRef(null);
   const viewerCloseRef = useRef(null);
   const { reportError } = useErrorReporting();
@@ -63,6 +72,17 @@ function PublicItemDetailModal({ item, onClose }) {
     }
   };
 
+  const handleCopyLink = async () => {
+    const url = `${window.location.origin}/item/${item.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      reportError(err);
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
@@ -92,6 +112,17 @@ function PublicItemDetailModal({ item, onClose }) {
             aria-label={t('publicModal.closeCard')}
           >
             <X size={16} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="modal-toolbar">
+          <Link to={`/item/${item.id}`} className="btn btn-ghost" onClick={onClose}>
+            <ExternalLink size={14} aria-hidden="true" />
+            {t('publicModal.openFullPage')}
+          </Link>
+          <button type="button" className="btn btn-ghost" onClick={handleCopyLink}>
+            {copied ? <Check size={14} aria-hidden="true" /> : <Link2 size={14} aria-hidden="true" />}
+            {copied ? t('publicModal.linkCopied') : t('publicModal.copyLink')}
           </button>
         </div>
 
