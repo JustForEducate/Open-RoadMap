@@ -202,7 +202,7 @@ PORT=3001
 ### Frontend
 ```env
 VITE_API_BASE_URL=https://open-roadmap-api.onrender.com
-VITE_APP_FOOTER=OpenRoadMap v1.0
+VITE_APP_FOOTER=OpenRoadMap v1.5
 ```
 
 ---
