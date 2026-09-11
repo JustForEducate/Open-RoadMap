@@ -1,224 +1,186 @@
 # OpenRoadMap
 
-**Modular Roadmap with Tactical HUD Design**
+**A self-hosted public roadmap with a protected admin panel.**
 
-A task management system with 4 stages, photo gallery, drag-and-drop admin panel, and military-style interface inspired by NATO and the game Squad.
+Share what you are planning, building and releasing. OpenRoadMap combines a four-stage Kanban board, task details, photo galleries and drag-and-drop administration in a lightweight React + Node.js application.
 
-[**Русская версия →**](README.ru.md)
+[Русский](README.ru.md) · [Security](SECURITY.md) · [Audit notes](docs/AUDIT.md)
 
----
+## Preview
 
-## Stages
+### Public roadmap
 
-Column titles are localized. Default UI language is **English**; **Russian** is available from a **header language dropdown** (flags + RU/EN codes; choice is stored in the browser as `openRoadMapLocale`). The header uses a **centered status** line (e.g. “SYSTEM ONLINE”) between the logo and actions.
+![OpenRoadMap public board with four development stages](docs/images/public-roadmap.png)
 
-1. **Planned** / В планах  
-2. **In Development** / В разработке  
-3. **Ready for Release** / Готово ждёт релиз  
-4. **Released** / Реализовано  
+### Admin panel
 
----
+![OpenRoadMap admin panel with task editing and add-item controls](docs/images/admin-roadmap.png)
 
-## Features
+*Actual application screenshots with illustrative test data. Sample cards describe a fictional project, not a list of implemented OpenRoadMap features.*
 
-- Public page — everyone can view the roadmap without login
-- Admin panel (`/admin`) — manage tasks and upload photos
-- **Interface languages (RU / EN)** — dropdown in the header (🇷🇺 / us); labels, buttons, and stage names follow the selection
-- **Viewer translation (RU → EN)** — on the public roadmap card modal and on `/item/:id`, **Show English translation** requests the backend; the English text appears **below** the original title and description (read-only; does not change stored data). **Hide translation** clears it
-- **Public roadmap refresh** — toolbar button reloads data; optional **“Updated …”** timestamp after a successful load
-- **Item page `/item/:id`** — same refresh control and timestamp; loads item + embedded photos from a **single** `GET /api/items` response when possible (no extra photo round-trip)
-- **Public card modal** — **Copy link**, **Open on full page**; gallery still refreshes from `GET /api/items/:id/photos` in the background
-- **Skip to main content** — first focusable link jumps to `#main-content` (keyboard / screen-reader friendly)
-- **Admin login** — visible password label, `autocomplete="current-password"`, **show / hide password** (Eye icons, `aria-pressed` + `aria-label`)
-- **Admin edit item** — hint **Ctrl+Enter / Cmd+Enter** to save
-- **Admin logout** — browser **confirm** before leaving edit mode
-- Drag & Drop — move tasks between stages
-- Photos — upload and view in a modal gallery with navigation; **“No photos”** placeholder aligned in the card strip
-- Tactical design inspired by NATO and Squad
-- SQLite (local) and PostgreSQL (production) support
+## Why OpenRoadMap?
 
----
+- **Public progress, controlled editing:** visitors browse without an account; server-side sessions protect task changes and uploads.
+- **Four stages:** Planned → In development → Ready for release → Implemented.
+- **Task management:** create, edit, delete and move cards between columns. On touch devices, change the stage in the edit form.
+- **Photo galleries:** upload JPEG, PNG, GIF or WebP; view photos in a modal and share a direct task link.
+- **English and Russian UI:** browser language detection, a language menu and locally saved preferences.
+- **Optional RU → EN translation:** displayed alongside the original, never written over it.
+- **Light, responsive interface:** Golos Text, warm orange accents, keyboard focus indicators and reduced-motion support.
+- **Choose your database:** SQLite for a simple single-process installation, PostgreSQL for hosted deployments.
 
-## Quick Start
+Routes: `/` — public board; `/admin` — administration; `/item/:id` — task details.
+
+## Quick start
+
+Requirements: **Node.js 22.12+**, **npm**, and Git. No external database is needed for local development.
 
 ```bash
-# Backend
-cd backend
-npm install
-npm start    # http://localhost:3001
-
-# Frontend (in another terminal)
-cd frontend
-npm install
-npm run dev  # http://localhost:5173
+git clone https://github.com/JustForEducate/Open-RoadMap.git
+cd Open-RoadMap
+npm run setup
+npm run admin:setup
+npm run dev
 ```
 
-Open http://localhost:5173
+Open **http://localhost:5173**. The backend listens on **http://localhost:3001**.
 
-**HTTP client:** `frontend/src/api.js` (`apiJson`) uses **AbortController** with a **20 s** timeout per request. On timeout the UI shows a localized **request timeout** message (`error.requestTimeout` in `i18n/translations.js`; mirror key `errorRequestTimeout` in `frontend/src/locales.js` for non-React references).
+`admin:setup` generates a unique administrator password, prints it once and writes only its **scrypt hash** to `backend/.env`. Save the password in a password manager. There is **no default password**. Without a configured hash, public viewing works but admin login is disabled.
 
-**Translation:** the `POST /api/translate` endpoint calls an external translation API from the **backend**. The machine running `npm start` must allow **outbound HTTPS** (for example to MyMemory). If translation fails, check firewall and proxy settings.
+If you want to customize configuration, copy `backend/.env.example` to `backend/.env` **before** running `admin:setup`. Do not overwrite the generated `.env` afterward.
 
-**List performance:** `GET /api/items` loads all rows, then **one** `SELECT … FROM photos WHERE item_id IN (…)` — no N+1 queries and no `Promise.all` per item (important for PostgreSQL connection pools).
+Stop both development servers with **Ctrl+C**. On Windows, `START.bat` runs the same command; `STOP.bat` explains safe shutdown and does not kill unrelated Node.js processes.
 
----
+## Commands
 
-## Admin Password
+Run from the repository root:
 
-> ⚠️ **TEMPORARY PASSWORD! Change it before going live!**
+| Command | Purpose |
+|---|---|
+| `npm run setup` | Install root, backend and frontend dependencies from lockfiles |
+| `npm run admin:setup` | Generate an admin password and save its hash |
+| `npm run dev` | Start both development servers |
+| `npm run dev:backend` / `npm run dev:frontend` | Start one development server |
+| `npm start` | Start the API without watch mode |
+| `npm run build` | Build the frontend into `frontend/dist` |
+| `npm run lint` | Static JavaScript/JSX checks |
+| `npm test` | Backend/API and frontend utility tests |
+| `npm run check` | Lint, tests and production build |
+| `npm run test:e2e` | Chromium browser tests with an isolated database |
 
-**Password:** `CHANGE_ME_NOW`
+Before the first browser test run:
 
-**Where to change:**
-`frontend/src/components/AdminAuth.jsx` — line:
-```js
-const storedPassword = localStorage.getItem('adminPassword') || 'CHANGE_ME_NOW';
+```bash
+npx playwright install --with-deps chromium
+npm run test:e2e
 ```
 
-The login form includes a **show/hide password** control (does not change the default password above).
+Browser tests use ports **3002/5174**, a temporary database and test-only credentials. They do not seed your normal roadmap. Set `UPDATE_SCREENSHOTS=1` when running them to regenerate the README images.
 
----
+## Configuration
 
-## Project Structure
-
-```
-open-roadmap/
-├── backend/
-│   ├── server.js              # Express entry point
-│   ├── database.js            # SQLite (local) / PostgreSQL (production)
-│   ├── routes/items.js        # CRUD API
-│   ├── routes/translate.js    # POST /api/translate (RU→EN, etc.)
-│   ├── middleware/upload.js   # Multer for photo uploads
-│   ├── uploads/               # Uploaded photos
-│   └── render.yaml            # Render config
-├── frontend/
-│   ├── src/
-│   │   ├── pages/             # PublicRoadmap, AdminLayout, Roadmap
-│   │   ├── components/        # StageColumn, RoadmapCard, PhotoModal, ItemModal, AdminAuth, LanguageSwitcher
-│   │   ├── context/           # ErrorContext, I18nContext
-│   │   ├── i18n/translations.js
-│   │   ├── locales.js         # Standalone strings (e.g. errorRequestTimeout); keep in sync with i18n where noted
-│   │   ├── formatTime.js      # Clock formatting for “last updated” hints
-│   │   ├── hooks/useStages.js
-│   │   ├── hooks/usePublicItemTranslation.js
-│   │   ├── stageDefinitions.js
-│   │   ├── api.js             # apiJson: VITE_API_BASE_URL, 20 s timeout, unified errors
-│   │   └── App.jsx            # Router (/ /admin /item/:id)
-│   └── vercel.json            # Vercel config
-├── database.sqlite            # SQLite DB (auto-created)
-├── START.bat                  # Start servers (Windows)
-├── STOP.bat                   # Stop servers (requires admin rights)
-├── .gitignore
-├── .env.example
-├── README.md                  # This file
-├── README.ru.md               # Russian version
-└── vercel.json
-```
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/items` | Get all items with photos (two SQL round-trips: items + batched photos by `item_id IN (…)`) |
-| `POST` | `/api/items` | Create `{title, description, stage}` |
-| `PUT` | `/api/items/:id` | Update `{title?, description?, stage?}` |
-| `DELETE` | `/api/items/:id` | Delete item + its photos |
-| `GET` | `/api/items/:id/photos` | Get item photos |
-| `POST` | `/api/items/:id/photos` | Upload photo (multipart) |
-| `DELETE` | `/api/items/:id/photos/:photoId` | Delete photo |
-| `POST` | `/api/translate` | Machine translation: body `{ "texts": ["..."], "from": "ru", "to": "en" }` → `{ "texts": [...] }` |
-| `GET` | `/api/health` | Server health check |
-
----
-
-## Admin Panel
-
-| URL | Description |
-|-----|-------------|
-| `http://localhost:5173` | Public roadmap view |
-| `http://localhost:5173/admin` | Admin panel (password required) |
-| `http://localhost:5173/item/:id` | Item detail with photos gallery |
-
-**Admin features:**
-- Click on a card → modal gallery with photos
-- ✏️ Edit title, description, stage (no automatic overwrite from machine translation); **Ctrl+Enter / Cmd+Enter** saves
-- 🗑️ Delete item
-- Drag & Drop between stages
-- ➕ Add new item
-- ➕ Upload photos to gallery
-- **Refresh** in the header (with spinner) and **“Updated …”** time after sync
-- **Log out** asks for confirmation
-
-**Public view (no login):**
-- Open a card on the home page, or open `/item/:id` — **Show English translation** loads machine translation; English appears **below** the original title and description. **Hide translation** clears it (data in the database is unchanged).
-- **Refresh** on the public roadmap; **Copy link** / **Open on full page** in the card modal (and similar actions on the item page)
-
----
-
-## Deployment
-
-### Render (Backend)
-
-1. **New → Web Service** → connect GitHub repository
-2. **Root Directory:** `backend`
-3. **Build Command:** `npm install`
-4. **Start Command:** `node server.js` (outbound network recommended for `/api/translate`)
-5. **New → PostgreSQL** → create database
-6. Copy **Internal Database URL** → add to Environment:
-   - `DATABASE_URL` = copied URL
-
-### Vercel (Frontend)
-
-1. **Add New → Project** → import repository
-2. **Root Directory:** `frontend`
-3. **Framework Preset:** `Vite`
-4. **Environment Variables:**
-   - `VITE_API_BASE_URL` = `https://open-roadmap-api.onrender.com`
-5. **Deploy**
-
-### Custom Domain on Vercel
-
----
-
-## Database
-
-| Mode | Engine | Condition |
-|------|--------|-----------|
-| Local development | SQLite (`sql.js`) | `DATABASE_URL` not set |
-| Production (Render) | PostgreSQL (`pg`) | `DATABASE_URL` set |
-
----
-
-## Environment Variables
+Backend reads `backend/.env` regardless of the working directory. Frontend uses `frontend/.env`; its variables are public and must not contain secrets.
 
 ### Backend
-```env
-DATABASE_URL=postgresql://user:password@host:5432/openroadmap
-PORT=3001
-```
+
+| Variable | Default / meaning |
+|---|---|
+| `ADMIN_PASSWORD_HASH` | No default; generated by `npm run admin:setup` |
+| `PORT` / `HOST` | `3001` / `0.0.0.0` |
+| `DATABASE_URL` | Unset = SQLite; set a PostgreSQL connection URL to use PostgreSQL |
+| `SQLITE_PATH` | `../database.sqlite`, relative to `backend/`, or an absolute path |
+| `UPLOADS_DIR` | `uploads`, relative to `backend/`, or an absolute path |
+| `NODE_ENV` | Use `production` on HTTPS deployments; enables Secure session cookies |
+| `ALLOWED_ORIGINS` | Comma-separated exact frontend origins; local defaults are `http://localhost:5173,http://127.0.0.1:5173`. Production has no extra origins by default; same-origin requests are allowed |
+| `COOKIE_SAME_SITE` | `lax`; `none` requires production/HTTPS and is only for cross-site deployments |
+| `TRUST_PROXY` | `0`; set the exact trusted reverse-proxy hop count only when required |
 
 ### Frontend
-```env
-VITE_API_BASE_URL=https://open-roadmap-api.onrender.com
-VITE_APP_FOOTER=OpenRoadMap v1.5
+
+| Variable | Default / meaning |
+|---|---|
+| `VITE_API_BASE_URL` | Empty = same-origin `/api` and `/uploads`; otherwise the backend origin, without `/api` |
+| `VITE_APP_FOOTER` | `OpenRoadMap` |
+| `VITE_DEV_PORT` | `5173` |
+| `VITE_DEV_PROXY_TARGET` | `http://localhost:3001` |
+
+Restart servers after configuration changes. Rebuild the frontend after changing production `VITE_*` values.
+
+## Deployment and storage
+
+**Recommended:** serve `frontend/dist` over HTTPS and reverse-proxy `/api` and `/uploads` to one backend process on the same origin. This avoids third-party cookie restrictions. Configure SPA fallback to `index.html` for frontend routes, not for API requests.
+
+**Render + Vercel:**
+
+1. Create a Render Web Service with root `backend`, build command `npm ci` and start command `npm start`.
+2. Set `NODE_ENV=production`, `ADMIN_PASSWORD_HASH` and the exact frontend origin in `ALLOWED_ORIGINS`. Configure `TRUST_PROXY` according to your actual proxy topology.
+3. Optionally provision PostgreSQL and set `DATABASE_URL`.
+4. Attach persistent storage for `UPLOADS_DIR`. PostgreSQL stores photo metadata, **not image files**.
+5. Deploy Vercel with root `frontend`, Vite preset and `VITE_API_BASE_URL` set to your backend's HTTPS origin. `frontend/vercel.json` handles SPA routes.
+6. Separate Vercel/Render domains require `COOKIE_SAME_SITE=none`; some browsers block third-party cookies regardless. Prefer same-origin proxying or same-site custom domains.
+
+Back up the database **and** uploaded files. The SQLite parent directory must already exist. Changing `DATABASE_URL` does not migrate data. Existing `backend/server.js` remains a compatible startup entry point.
+
+Sessions and rate limits are in process memory. Sessions expire after **8 hours** or a backend restart; logout revokes the session server-side. This release targets **one backend process**. Multiple replicas require a shared session/rate-limit store, shared image storage and a suitable database strategy.
+
+## Security and limits
+
+- Password verification and authorization happen on the server, not in `localStorage`.
+- Session cookies are HttpOnly and Secure in production. Mutation requests require `X-Requested-With: OpenRoadMap`; browser origins are checked.
+- Login: **10 attempts / 15 minutes / IP**. API: **300 requests / minute / IP**. Translation: **10 requests / minute / IP**, up to four concurrent translations per process.
+- Title: **200 characters**; description: **10,000 characters**; stage: integer **1–4**. JSON request bodies are limited to **32 KiB**.
+- Upload: one image, **10 MiB**, up to **25 megapixels**. Images are decoded, stripped of metadata, resized to at most 2560×2560 and stored as WebP. Animated images become a still frame.
+- Translation: 1–2 non-empty strings, at most 10,200 characters total; 15-second server deadline. Text is sent to the external **MyMemory** service only when translation is requested.
+- Invalid JSON/API schemas produce explicit errors rather than empty successful results. Client timeout covers headers **and response body**, with cancellation cleanup.
+
+These controls do not replace secure hosting, dependency updates or backups. See [SECURITY.md](SECURITY.md) and [audit scope and remaining limitations](docs/AUDIT.md).
+
+## API overview
+
+| Method | Endpoint | Access |
+|---|---|---|
+| `GET` | `/api/health` | Public |
+| `GET` | `/api/items` | Public list with photos |
+| `GET` | `/api/items/:id` | Public task with photos; 404 if missing |
+| `POST` | `/api/items` | Admin; `{title, description?, stage}` |
+| `PUT` / `DELETE` | `/api/items/:id` | Admin |
+| `GET` | `/api/items/:id/photos` | Public |
+| `POST` | `/api/items/:id/photos` | Admin; multipart field `photo` |
+| `DELETE` | `/api/items/:id/photos/:photoId` | Admin |
+| `POST` | `/api/translate` | Public, rate-limited; `{texts, from: "ru", to: "en"}` |
+| `GET` | `/api/auth/session` | Session status |
+| `POST` | `/api/auth/login` | `{password}`; issues a session cookie |
+| `POST` | `/api/auth/logout` | Revokes current session |
+
+For custom clients, send the mutation header above, retain the login cookie and use JSON `Content-Type` for JSON bodies. Photo URLs in API responses are relative `/uploads/...` paths; resolve them against the backend origin.
+
+## Project layout
+
+```text
+backend/src/        Express app, startup, config, database, routes,
+                    repositories, validation, security and services
+backend/test/       API integration and unit tests
+frontend/src/app/   Entry point, router and global styles
+frontend/src/features/admin/     Login and admin shell
+frontend/src/features/roadmap/   Board, cards, galleries and translation
+frontend/src/shared/             API client, i18n, contexts, hooks and UI
+frontend/test/      Client and localization tests
+tests/e2e/          Browser scenarios and screenshot generation
+scripts/            Development runner, admin setup and isolated E2E server
+docs/               Screenshots and audit report
 ```
 
----
+**Stack:** React 18, Vite 7, React Router 7, Lucide, Express 4, Multer 2, Sharp, SQLite (`sql.js`) / PostgreSQL (`pg`). Styles use plain CSS, not Tailwind. Golos Text loads from Google Fonts; system fonts remain available if it is blocked.
 
-## Running on Windows
+## Troubleshooting
 
-```cmd
-START.bat    # Start both servers
-STOP.bat     # Stop servers (admin rights required)
-```
+- **Login disabled:** run `npm run admin:setup` and restart the backend.
+- **403 / Origin not allowed:** verify the exact frontend origin in `ALLOWED_ORIGINS`, including scheme and port.
+- **Login succeeds but immediately appears lost:** check cookie policy, HTTPS, proxy settings and third-party cookie restrictions.
+- **No API connection / invalid response:** check `/api/health`, `VITE_API_BASE_URL` and proxy routes. An HTML SPA fallback is not an API response.
+- **Photos disappear after deployment:** ensure `UPLOADS_DIR` is persistent and backed up.
+- **Translation fails:** verify outbound HTTPS and MyMemory availability; errors do not change original tasks.
 
----
+## Contributing
 
-## Tech Stack
-
-- **Frontend:** React 18, Vite 6, React Router 6, Lucide Icons; UI i18n (RU/EN); `apiJson` with a **20 s** request timeout
-- **Backend:** Node.js 20+, Express 4, Multer, SQL.js / pg; **batched photos** for list endpoints; optional machine translation proxy (`fetch` to external API)
-- **Design:** CSS Custom Properties, Orbitron + Share Tech Mono
-- **Hosting:** Vercel (Frontend) + Render (Backend + PostgreSQL)
+Keep changes focused, add regression tests, and run `npm run check` plus relevant browser tests. Do not commit credentials, local databases or uploads. UI strings belong in both RU and EN dictionaries. For bugs, include reproduction steps, environment and sanitized logs; do not post security-sensitive details publicly.

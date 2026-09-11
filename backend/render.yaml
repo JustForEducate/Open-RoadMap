@@ -4,7 +4,7 @@ services:
     env: node
     region: frankfurt
     buildCommand: npm install
-    startCommand: node server.js
+    startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
@@ -12,4 +12,8 @@ services:
       - key: PORT
         value: 10000
       - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: ALLOWED_ORIGINS
         sync: false
