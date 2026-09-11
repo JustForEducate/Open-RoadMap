@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       port: devPort,
+      strictPort: true,
+      host: '0.0.0.0',
+      allowedHosts: ['.e2b.app'],
       proxy: {
         '/api': {
           target: proxyTarget,

@@ -2,6 +2,26 @@
   "name": "open-roadmap",
   "private": true,
   "scripts": {
-    "build": "cd frontend && npm install && npm run build"
-  }
+    "setup": "npm ci && npm ci --prefix backend && npm ci --prefix frontend",
+    "dev": "node scripts/dev.mjs",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "start": "npm --prefix backend start",
+    "build": "npm --prefix frontend run build",
+    "test": "npm --prefix backend test && npm --prefix frontend test",
+    "check": "npm run lint && npm test && npm run build",
+    "admin:setup": "node scripts/setup-admin.mjs",
+    "lint": "eslint .",
+    "test:e2e": "playwright test"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0"
+  },
+  "type": "module"
 }
